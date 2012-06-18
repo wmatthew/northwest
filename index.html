@@ -1,0 +1,581 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>Northwest</title>
+<style>
+body {
+  margin: 0px 0px 0px 0px;
+  overflow-x: hidden;
+}
+#tileContainer {
+  position: absolute;
+}
+#instructions {
+  position:absolute;
+  top: 20px;
+  left: 220px;
+  width: 611px;
+  height: 40px;
+  background: #AAA;
+  font-size: 20px;
+  line-height:2em;
+  text-align:center;
+}
+#menu {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  width: 180px;
+}
+.leftMenuItem {
+  width: 180px;
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.leftMenuItem input[type=text] {
+  width: 175px;
+  background: #AAA;
+}
+#errorBox {
+  background: #F66;
+}
+
+</style>
+<script type="text/javascript" src="http://m.atthe.ws/games/northwest/bad_12.js"></script>
+<script type="text/javascript" src="http://m.atthe.ws/games/northwest/grid_stats.php"></script>
+<script type="text/javascript">
+
+var DEBUG = true;
+var tileContainer, instructions, fasterButton, slowerButton, outcome;
+var theText, outcomeText;
+var boardSize = 12; 
+var gameStarted = false;
+var tiles;
+var blank,red,darkGray,lightGray;
+var blockSize = 50;
+var topOffset = 80;
+var leftOffset = 220;
+var origin;
+var humanTurn = true;
+var longWait = 1500;
+var shortWait = 200;
+var wait = longWait;
+var easyRed,easyGreen,easyBlue;
+var hardRed,hardGreen,hardBlue;
+var mostRecentGame_i;
+var mostRecentGame_j;
+
+//=================================================================
+// Initialization
+function init() {
+  active = '#8C4';
+  blank = '#FFF';
+  red = '#F00';
+  darkGray = '#444';
+  lightGray = '#888';
+  tileContainer = document.getElementById("tileContainer");
+  initColors();
+  initTiles();
+  initLeftMenu();
+  initInstructions();
+  setUpNewGame("Pick any square to start a game.");
+}
+
+function initColors() {
+  easyRed=88;
+  easyGreen=200;
+  easyBlue=64;
+
+  medRed=255;
+  medGreen=255;
+  medBlue=0;
+
+  hardRed=255;
+  hardGreen=20;
+  hardBlue=0;  
+}
+
+function initTiles() {
+  document.body.style.background = darkGray;
+  tiles = new Array();
+  for (var i = 0; i < boardSize; i++) {
+    tiles[i] = new Array();
+    for (var j = 0; j < boardSize; j++) {
+      var newTile = document.createElement('div');
+      //newTile.appendChild(document.createTextNode(i+","+j));//debugging
+      newTile.style.top = ''+(topOffset+i*(blockSize+1))+'px';
+      newTile.style.left = ''+(leftOffset+j*(blockSize+1))+'px';
+      newTile.style.background = active;
+      newTile.style.width = blockSize+'px';
+      newTile.style.height = blockSize+'px';
+      newTile.style.position = 'absolute';
+      newTile.i = i;
+      newTile.j = j;
+      newTile.wins = hw[i][j]; // wins
+      newTile.plays = hp[i][j]; // plays
+      setDifficulty(newTile);
+      initTileShade(newTile);
+      newTile.onclick = function() {clickTile(this)};
+      newTile.onmouseover = function() {highlight(this)};
+      tileContainer.appendChild(newTile);
+      tiles[i][j] = newTile;
+    }
+  }
+  origin = tiles[0][0];
+  skull = document.createElement('img');
+  skull.src = 'skull.png';
+  skull.style.margin = '5px';
+  origin.appendChild(skull);
+  origin.skull = skull;
+  hide(origin);
+}
+
+// lower value = more difficulty.
+function setDifficulty(tile) {
+  tile.difficulty = Math.min((tile.wins+1)/(tile.plays+2), 1);
+  switch (Math.floor(tile.difficulty*5)) {
+    case 0: tile.level = "Very Hard"; break;
+    case 1: tile.level = "Hard"; break;
+    case 2: tile.level = "Medium"; break;
+    case 3: tile.level = "Easy"; break;
+    default: tile.level = "Very Easy"; break;
+  }
+}
+
+function initTileShade(tile) {
+   var shade = tile.difficulty;
+   var easyX = Math.max(0.0,shade-0.5)*2;
+   var medX  = Math.min(shade,1-shade)*2;
+   var hardX = Math.max(0.0,0.5-shade)*2;
+   var red = easyRed  *easyX + medRed  *medX + hardRed  *hardX;
+   var gre = easyGreen*easyX + medGreen*medX + hardGreen*hardX;
+   var blu = easyBlue *easyX + medBlue *medX + hardBlue *hardX;
+   tile.active = 'RGB('+Math.floor(red)+','+Math.floor(gre)+','+Math.floor(blu)+')';
+
+   red = red/2;
+   gre = gre/2;
+   blu = blu/2;
+   tile.passive = 'RGB('+Math.floor(red)+','+Math.floor(gre)+','+Math.floor(blu)+')';
+
+   tile.style.background = tile.active;
+}
+
+function highlight(e) {
+  if (gameStarted) {
+    for (var i in tiles) {
+      for (var j in tiles[i]) {
+        cell = tiles[i][j];
+        if (i>=e.i && j>=e.j) {
+          cell.style.background = cell.passive;
+        } else {
+          cell.style.background = cell.active;
+        }    
+      }
+    }
+  } else {
+    say("Difficulty: "+e.level+". Click to play.");
+    for (var i in tiles) {
+      for (var j in tiles[i]) {
+        cell = tiles[i][j];
+        if (i>e.i || j>e.j) {
+          cell.style.background = cell.passive;
+        } else {
+          cell.style.background = cell.active;
+        }
+      }
+    }
+  }
+  origin.style.background = red;
+}
+
+function initInstructions() {
+  instructions = document.getElementById("instructions");
+  theText = document.createTextNode("loading...");
+  instructions.appendChild(theText);
+}
+
+function initLeftMenu() {
+  newGameButton = document.getElementById("newGame");
+  newGameButton.onclick = setUpNewGame;
+  gameState = document.getElementById("gameState");
+  hide(gameState);
+  errorBox = document.getElementById("errorBox");
+  hide(errorBox);
+
+  fasterButton = document.getElementById("fasterButton");
+  hide(fasterButton);
+  fasterButton.onclick = thinkFaster;
+  slowerButton = document.getElementById("slowerButton");
+  hide(slowerButton);
+  slowerButton.onclick = thinkSlower;
+
+  outcome = document.getElementById("outcome");
+  outcomeText = document.createTextNode("loading...");
+  outcome.appendChild(outcomeText);
+  hide(outcome);
+}
+
+function showOutcome(msg,color) {
+  outcome.style.display = 'block';
+  outcome.style.background = color;
+  outcome.removeChild(outcomeText);
+  outcomeText = document.createTextNode(msg);
+  outcome.appendChild(outcomeText);
+}
+
+// Hack
+function say(str) {
+  instructions.removeChild(theText);
+  theText = document.createTextNode(str);
+  instructions.appendChild(theText);
+  //debug(str);
+}
+
+function complain(message) {
+  errorBox.value = "Error: " + message;
+  show(errorBox);
+  debug(str);
+}
+
+function debug(msg) {
+  if (DEBUG) {
+    console.log(msg);
+  }
+}
+
+function thinkFaster() {
+  wait = shortWait;
+  hide(fasterButton);
+  show(slowerButton);
+}
+
+function thinkSlower() {
+  wait = longWait;
+  hide(slowerButton);
+}
+
+//=================================================================
+// Get string representation of the grid
+function repState() {
+  var state = repStateHypothetical(99,99); //99 = "sufficiently large"
+  if (!origin.on) state = '0';
+  gameState.value= state;
+  show(gameState);
+}
+
+function repStateHypothetical(x,y) {
+  var state = hypoHelper(x,y);
+  if (state == '0') return '0';
+  if (state == '') return '0';
+  return state.substring(0,state.length-1); // remove trailing '.'
+}
+
+// What is the state string if I clicked on the tile at (i,j)?
+function hypoHelper(x,y) {
+  var state = "";
+  for (var i in tiles) {
+    var count = countRow(i,x,y);
+    if (count < 1) {
+      return state;
+    }
+    state += count + ".";
+  }
+  return state;
+}
+
+function countRow(i,x,y) {
+  var count = 0;
+  for(var j in tiles[i]) {
+    if (tiles[i][j].on) {
+      count++;
+    }
+  }  
+  if (i>=x) {
+    count = Math.min(count,y);
+  }
+  return count;
+}
+
+//=================================================================
+
+function clickTile(e) {
+  hide(outcome);
+  //debug("Tile Clicked.");
+  if (!gameStarted) {
+    startGame(e);
+  } else if (!humanTurn) {
+      if (wait == longWait) {
+        say("Want me to think faster?");
+      show(fasterButton);
+      } else {
+        say("I'm still figuring out my move; be patient.");
+      }
+  } else {
+    humanMoves(e);
+  }
+}
+
+function startGame(e) {
+  debug("Game Started");
+  if (e.i ==0 && e.j == 0) {say("Pick any OTHER square please."); return;}
+  for (var i in tiles) {
+    for (var j in tiles[i]) {
+      cell = tiles[i][j];
+      if (cell.i > e.i || cell.j > e.j)
+        turnOff(cell);
+    }
+  }
+  turnOn(origin);
+  gameStarted = true;
+  repState();
+  logStart(e.i,e.j);
+  say("Game started. You go first; pick a square to remove.");
+}
+
+function humanMoves(e) {
+  var gameEnded = removeSection(e.i,e.j);
+  if (gameEnded) return;
+
+  humanTurn = false;
+  say("Okay, my turn.");
+  setTimeout('computerMoves()',wait);
+}
+
+//=================================================================
+// Computer Strategy
+//
+// When Winning
+//   Do first move found that keeps you winning (AI is currently doing this)
+//   Better: Do the most aggressive move possible?
+//
+// When Losing
+//   Act randomly.
+//   Move slowly (drag feet)? (but this is annoying, so no)
+//   ~10% of the time: do something different, to confuse?
+//
+function computerMoves() {
+  var validMoveCount = 0;
+  for (var i in tiles) {
+    for (var j in tiles[i]) {
+      if (tiles[i][j].on) {
+        validMoveCount ++;
+        var possible = repStateHypothetical(i,j);
+        if(lookup[possible]) {
+          computerMovesHelper(i,j);
+          debug("I'm winning.");
+          //debug("  this will lead to " + possible);
+          return;
+        }
+      }    
+    }
+  }
+  // Losing. Pick a random move. Only pick skull if you have to.
+  debug("I'm losing");
+  var chosenMove = 0;
+  if (validMoveCount > 1) {
+    chosenMove = 1 + Math.floor(Math.random()*(validMoveCount-1));
+  }
+  debug("Choosing move #" + (chosenMove+1) + " of " + validMoveCount);
+  for (var i in tiles) {
+    for (var j in tiles[i]) {
+      if (tiles[i][j].on) {
+        chosenMove --;
+        if (chosenMove < 0) {
+          computerMovesHelper(i,j);
+          return;
+        }
+      }
+    }
+  }
+
+  complain("Computer couldn't find valid move!");
+}
+
+// Peform a function on every tile, starting on the OUTSIDE and going inward
+// Not used (yet)
+function iterateInward(callback) {
+  for (var sum=(2*(boardSize-1)); sum>=0; sum--) {
+    for (var i=Math.min((boardSize-1),sum); i>=Math.max(0,sum-(boardSize-1)); i--) {
+      var j = sum - i;
+      if (callback(i,j)) {
+        return;
+      }
+    }
+  }
+}
+
+// Peform a function on every tile, starting on the INSIDE and going outward
+function iterateOutward(callback) {
+  for (var sum=0; sum<=(2*(boardSize-1)); sum++) {
+    for (var i=Math.min((boardSize-1),sum); i>=Math.max(0,sum-(boardSize-1)); i--) {
+      var j = sum - i;
+      if (callback(i,j)) {
+        return;
+      }
+    }
+  }
+}
+
+function computerMovesHelper(i,j) {
+  debug("My move is: " + i + "," + j);
+  var gameEnded = removeSection(i,j);
+  if (gameEnded) return; // game just ended; don't pass turn to human
+
+  humanTurn = true;
+  say("Your turn again. Pick a square to remove.");
+}
+
+// Return true if game is over, false otherwise.
+function removeSection(Ti,Tj) {
+  candidate = tiles[Ti][Tj];
+  if (!candidate.on) {
+    complain("Error. Tile is already off: " + Ti + "," + Tj);
+  }
+
+  for (var i in tiles) {
+    for (var j in tiles[i]) {
+      cell = tiles[i][j];
+      if (cell.i >= Ti && cell.j >= Tj)
+        turnOff(cell);
+    }
+  }
+
+  repState();
+
+  if (Ti==0 && Tj == 0) {
+    // Game is over
+    var endMessage;
+    if (humanTurn) {
+      endMessage = "You picked the skull. You lose.";
+      showOutcome("you lost.", '#AAA');
+    } else {
+      endMessage = "Darn, I picked the skull. You win!";
+      showOutcome("YOU WON!", '#0F0');
+      // TODO: Unlock 'cheat mode' here?
+      logWin();
+      
+    }
+
+    gameStarted = false;
+    hide(gameState);
+    refreshMap();
+    //show(newGameButton);
+
+    // Go straight into next game!
+    setUpNewGame(endMessage);
+    return true; // game over.
+  }
+  return false;
+}
+
+function turnOff(tile) {
+  tile.on = false;
+  hide(tile);
+}
+
+function turnOn(tile) {
+  tile.on = true;
+  show(tile);
+}
+
+// Runs before every new game, before player picks board size.
+function setUpNewGame(displayMessage) {
+  hide(newGameButton);
+  for (var i in tiles) {
+    for (var j in tiles[i]) {
+      turnOn(tiles[i][j]);
+    }
+  }
+  humanTurn = true;
+  turnOff(origin); // can't play a 1x1 game
+  say(displayMessage);
+}
+
+function show(elt) {
+  elt.style.display = 'inline';
+}
+
+function hide(elt) {
+  elt.style.display = 'none';
+}
+
+//=================================================================
+// Refresh map
+function refreshMap() {
+  var url = "http://m.atthe.ws/games/northwest/grid_stats.php";
+  sillyAjax(url, '', colorCallback);
+}
+
+function colorCallback(text) {
+  eval(text);
+  reColorTiles();
+}
+
+function reColorTiles() {
+  debug("Recoloring");
+  for (var i = 0; i < boardSize; i++) {
+    for (var j = 0; j < boardSize; j++) {
+      var tile = tiles[i][j];
+      tile.wins = hw[i][j];
+      tile.plays = hp[i][j];
+      setDifficulty(tile);
+      initTileShade(tile);      
+    }
+  }
+}
+
+//=================================================================
+// Loggin'
+function logStart(i,j) {
+  debug("logging start");
+  mostRecentGame_i = i;
+  mostRecentGame_j = j;
+  logAct(mostRecentGame_i,mostRecentGame_j,'start');
+}
+
+function logWin() {
+  debug("logging win");
+  logAct(mostRecentGame_i,mostRecentGame_j,'win');
+  mostRecentGame_i = -1;
+  mostRecentGame_j = -1;
+}
+
+function logAct(i,j,act) {
+  var url = "http://m.atthe.ws/games/northwest/northwest_logger.php";
+  var params = "?x="+i+"&y="+j+"&act="+act;
+  sillyAjax(url,params,null);
+}
+
+function sillyAjax(url,params,callback) {
+  var http = new XMLHttpRequest();
+  http.open("GET", url+params, true);
+  http.onreadystatechange = function() {
+    if (http.readyState == 4 && http.status == 200) {
+      if (callback != null) {
+        callback(http.responseText);
+      }
+    }
+  }
+  http.send();
+}
+
+//=================================================================
+
+</script>
+</head>
+
+<body onload="init()">
+<div id="tileContainer"></div>
+<div id="instructions"></div>
+<div id="menu">
+ <div id="outcome" class="leftMenuItem"></div>
+ <input id="gameState" value="" type="text" class="leftMenuItem">
+ <input id="newGame" value="New Game" type="button" class="leftMenuItem">
+ <input id="errorBox" value="" type="text" class="leftMenuItem">
+ <input id="fasterButton" value="think faster" type="button" class="leftMenuItem">
+ <input id="slowerButton" value="think slower" type="button" class="leftMenuItem">
+</div>
+</body>
+
+</html>

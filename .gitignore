@@ -1,0 +1,7 @@
+# Northwest .gitignore
+
+# OSX files
+*.DS_Store*
+
+# Hidden scratch dir
+scratch
