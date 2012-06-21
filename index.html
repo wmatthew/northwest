@@ -1,581 +1,705 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>Northwest</title>
-<style>
-body {
-  margin: 0px 0px 0px 0px;
-  overflow-x: hidden;
-}
-#tileContainer {
-  position: absolute;
-}
-#instructions {
-  position:absolute;
-  top: 20px;
-  left: 220px;
-  width: 611px;
-  height: 40px;
-  background: #AAA;
-  font-size: 20px;
-  line-height:2em;
-  text-align:center;
-}
-#menu {
-  position: absolute;
-  top: 80px;
-  left: 20px;
-  width: 180px;
-}
-.leftMenuItem {
-  width: 180px;
-  font-size: 20px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-.leftMenuItem input[type=text] {
-  width: 175px;
-  background: #AAA;
-}
-#errorBox {
-  background: #F66;
-}
-
-</style>
-<script type="text/javascript" src="http://m.atthe.ws/games/northwest/bad_12.js"></script>
-<script type="text/javascript" src="http://m.atthe.ws/games/northwest/grid_stats.php"></script>
-<script type="text/javascript">
-
-var DEBUG = true;
-var tileContainer, instructions, fasterButton, slowerButton, outcome;
-var theText, outcomeText;
-var boardSize = 12; 
-var gameStarted = false;
-var tiles;
-var blank,red,darkGray,lightGray;
-var blockSize = 50;
-var topOffset = 80;
-var leftOffset = 220;
-var origin;
-var humanTurn = true;
-var longWait = 1500;
-var shortWait = 200;
-var wait = longWait;
-var easyRed,easyGreen,easyBlue;
-var hardRed,hardGreen,hardBlue;
-var mostRecentGame_i;
-var mostRecentGame_j;
-
-//=================================================================
-// Initialization
-function init() {
-  active = '#8C4';
-  blank = '#FFF';
-  red = '#F00';
-  darkGray = '#444';
-  lightGray = '#888';
-  tileContainer = document.getElementById("tileContainer");
-  initColors();
-  initTiles();
-  initLeftMenu();
-  initInstructions();
-  setUpNewGame("Pick any square to start a game.");
-}
-
-function initColors() {
-  easyRed=88;
-  easyGreen=200;
-  easyBlue=64;
-
-  medRed=255;
-  medGreen=255;
-  medBlue=0;
-
-  hardRed=255;
-  hardGreen=20;
-  hardBlue=0;  
-}
-
-function initTiles() {
-  document.body.style.background = darkGray;
-  tiles = new Array();
-  for (var i = 0; i < boardSize; i++) {
-    tiles[i] = new Array();
-    for (var j = 0; j < boardSize; j++) {
-      var newTile = document.createElement('div');
-      //newTile.appendChild(document.createTextNode(i+","+j));//debugging
-      newTile.style.top = ''+(topOffset+i*(blockSize+1))+'px';
-      newTile.style.left = ''+(leftOffset+j*(blockSize+1))+'px';
-      newTile.style.background = active;
-      newTile.style.width = blockSize+'px';
-      newTile.style.height = blockSize+'px';
-      newTile.style.position = 'absolute';
-      newTile.i = i;
-      newTile.j = j;
-      newTile.wins = hw[i][j]; // wins
-      newTile.plays = hp[i][j]; // plays
-      setDifficulty(newTile);
-      initTileShade(newTile);
-      newTile.onclick = function() {clickTile(this)};
-      newTile.onmouseover = function() {highlight(this)};
-      tileContainer.appendChild(newTile);
-      tiles[i][j] = newTile;
-    }
+ <title>Northwest</title>
+ <style>
+  .screen {
+    position:absolute;
+    top:0px;
+    left:0px;
+    background-color:rgba(127,127,127,.7);
   }
-  origin = tiles[0][0];
-  skull = document.createElement('img');
-  skull.src = 'skull.png';
-  skull.style.margin = '5px';
-  origin.appendChild(skull);
-  origin.skull = skull;
-  hide(origin);
-}
-
-// lower value = more difficulty.
-function setDifficulty(tile) {
-  tile.difficulty = Math.min((tile.wins+1)/(tile.plays+2), 1);
-  switch (Math.floor(tile.difficulty*5)) {
-    case 0: tile.level = "Very Hard"; break;
-    case 1: tile.level = "Hard"; break;
-    case 2: tile.level = "Medium"; break;
-    case 3: tile.level = "Easy"; break;
-    default: tile.level = "Very Easy"; break;
+  body {
+    background-color:#000;
+    font-family: "Helvetica Neue",Helvetica,Arial;
+    overflow-y: hidden;
+    overflow-x: hidden;
   }
-}
-
-function initTileShade(tile) {
-   var shade = tile.difficulty;
-   var easyX = Math.max(0.0,shade-0.5)*2;
-   var medX  = Math.min(shade,1-shade)*2;
-   var hardX = Math.max(0.0,0.5-shade)*2;
-   var red = easyRed  *easyX + medRed  *medX + hardRed  *hardX;
-   var gre = easyGreen*easyX + medGreen*medX + hardGreen*hardX;
-   var blu = easyBlue *easyX + medBlue *medX + hardBlue *hardX;
-   tile.active = 'RGB('+Math.floor(red)+','+Math.floor(gre)+','+Math.floor(blu)+')';
-
-   red = red/2;
-   gre = gre/2;
-   blu = blu/2;
-   tile.passive = 'RGB('+Math.floor(red)+','+Math.floor(gre)+','+Math.floor(blu)+')';
-
-   tile.style.background = tile.active;
-}
-
-function highlight(e) {
-  if (gameStarted) {
-    for (var i in tiles) {
-      for (var j in tiles[i]) {
-        cell = tiles[i][j];
-        if (i>=e.i && j>=e.j) {
-          cell.style.background = cell.passive;
-        } else {
-          cell.style.background = cell.active;
-        }    
-      }
-    }
-  } else {
-    say("Difficulty: "+e.level+". Click to play.");
-    for (var i in tiles) {
-      for (var j in tiles[i]) {
-        cell = tiles[i][j];
-        if (i>e.i || j>e.j) {
-          cell.style.background = cell.passive;
-        } else {
-          cell.style.background = cell.active;
-        }
-      }
-    }
+  h2,h3,p {
+    color:#FFF;
   }
-  origin.style.background = red;
-}
-
-function initInstructions() {
-  instructions = document.getElementById("instructions");
-  theText = document.createTextNode("loading...");
-  instructions.appendChild(theText);
-}
-
-function initLeftMenu() {
-  newGameButton = document.getElementById("newGame");
-  newGameButton.onclick = setUpNewGame;
-  gameState = document.getElementById("gameState");
-  hide(gameState);
-  errorBox = document.getElementById("errorBox");
-  hide(errorBox);
-
-  fasterButton = document.getElementById("fasterButton");
-  hide(fasterButton);
-  fasterButton.onclick = thinkFaster;
-  slowerButton = document.getElementById("slowerButton");
-  hide(slowerButton);
-  slowerButton.onclick = thinkSlower;
-
-  outcome = document.getElementById("outcome");
-  outcomeText = document.createTextNode("loading...");
-  outcome.appendChild(outcomeText);
-  hide(outcome);
-}
-
-function showOutcome(msg,color) {
-  outcome.style.display = 'block';
-  outcome.style.background = color;
-  outcome.removeChild(outcomeText);
-  outcomeText = document.createTextNode(msg);
-  outcome.appendChild(outcomeText);
-}
-
-// Hack
-function say(str) {
-  instructions.removeChild(theText);
-  theText = document.createTextNode(str);
-  instructions.appendChild(theText);
-  //debug(str);
-}
-
-function complain(message) {
-  errorBox.value = "Error: " + message;
-  show(errorBox);
-  debug(str);
-}
-
-function debug(msg) {
-  if (DEBUG) {
-    console.log(msg);
+  .menu {
+    position:absolute;
+    top:10px;
+    left: 600px;
   }
-}
-
-function thinkFaster() {
-  wait = shortWait;
-  hide(fasterButton);
-  show(slowerButton);
-}
-
-function thinkSlower() {
-  wait = longWait;
-  hide(slowerButton);
-}
-
-//=================================================================
-// Get string representation of the grid
-function repState() {
-  var state = repStateHypothetical(99,99); //99 = "sufficiently large"
-  if (!origin.on) state = '0';
-  gameState.value= state;
-  show(gameState);
-}
-
-function repStateHypothetical(x,y) {
-  var state = hypoHelper(x,y);
-  if (state == '0') return '0';
-  if (state == '') return '0';
-  return state.substring(0,state.length-1); // remove trailing '.'
-}
-
-// What is the state string if I clicked on the tile at (i,j)?
-function hypoHelper(x,y) {
-  var state = "";
-  for (var i in tiles) {
-    var count = countRow(i,x,y);
-    if (count < 1) {
-      return state;
-    }
-    state += count + ".";
+  .menu a {
+    padding:10px;
+    color:#AAA;
   }
-  return state;
-}
-
-function countRow(i,x,y) {
-  var count = 0;
-  for(var j in tiles[i]) {
-    if (tiles[i][j].on) {
-      count++;
-    }
-  }  
-  if (i>=x) {
-    count = Math.min(count,y);
+  .screen div {
+    background-color:#000;
+    text-align:center;
+    padding:50px;
+    position:absolute;
   }
-  return count;
-}
-
-//=================================================================
-
-function clickTile(e) {
-  hide(outcome);
-  //debug("Tile Clicked.");
-  if (!gameStarted) {
-    startGame(e);
-  } else if (!humanTurn) {
-      if (wait == longWait) {
-        say("Want me to think faster?");
-      show(fasterButton);
-      } else {
-        say("I'm still figuring out my move; be patient.");
-      }
-  } else {
-    humanMoves(e);
+  h2.say {
+    margin-left: 140px;
+    font-size: 200%;
+    margin-bottom: -25px;
   }
-}
-
-function startGame(e) {
-  debug("Game Started");
-  if (e.i ==0 && e.j == 0) {say("Pick any OTHER square please."); return;}
-  for (var i in tiles) {
-    for (var j in tiles[i]) {
-      cell = tiles[i][j];
-      if (cell.i > e.i || cell.j > e.j)
-        turnOff(cell);
-    }
+  h3.say {
+    margin-left: 160px;
+    font-size: 160%;
+    text-transform:lowercase;
   }
-  turnOn(origin);
-  gameStarted = true;
-  repState();
-  logStart(e.i,e.j);
-  say("Game started. You go first; pick a square to remove.");
-}
-
-function humanMoves(e) {
-  var gameEnded = removeSection(e.i,e.j);
-  if (gameEnded) return;
-
-  humanTurn = false;
-  say("Okay, my turn.");
-  setTimeout('computerMoves()',wait);
-}
-
-//=================================================================
-// Computer Strategy
-//
-// When Winning
-//   Do first move found that keeps you winning (AI is currently doing this)
-//   Better: Do the most aggressive move possible?
-//
-// When Losing
-//   Act randomly.
-//   Move slowly (drag feet)? (but this is annoying, so no)
-//   ~10% of the time: do something different, to confuse?
-//
-function computerMoves() {
-  var validMoveCount = 0;
-  for (var i in tiles) {
-    for (var j in tiles[i]) {
-      if (tiles[i][j].on) {
-        validMoveCount ++;
-        var possible = repStateHypothetical(i,j);
-        if(lookup[possible]) {
-          computerMovesHelper(i,j);
-          debug("I'm winning.");
-          //debug("  this will lead to " + possible);
-          return;
-        }
-      }    
-    }
+  .screen p {
+    font-size: 120%;
   }
-  // Losing. Pick a random move. Only pick skull if you have to.
-  debug("I'm losing");
-  var chosenMove = 0;
-  if (validMoveCount > 1) {
-    chosenMove = 1 + Math.floor(Math.random()*(validMoveCount-1));
+  canvas.full {
+    position:absolute;
+    z-index:-1;
+    left:0px;
+    top:100px;
   }
-  debug("Choosing move #" + (chosenMove+1) + " of " + validMoveCount);
-  for (var i in tiles) {
-    for (var j in tiles[i]) {
-      if (tiles[i][j].on) {
-        chosenMove --;
-        if (chosenMove < 0) {
-          computerMovesHelper(i,j);
-          return;
-        }
-      }
-    }
+  a:active, a:selected,a:visited,a:focus {
+    border:none;
+    outline:none;
   }
 
-  complain("Computer couldn't find valid move!");
-}
-
-// Peform a function on every tile, starting on the OUTSIDE and going inward
-// Not used (yet)
-function iterateInward(callback) {
-  for (var sum=(2*(boardSize-1)); sum>=0; sum--) {
-    for (var i=Math.min((boardSize-1),sum); i>=Math.max(0,sum-(boardSize-1)); i--) {
-      var j = sum - i;
-      if (callback(i,j)) {
-        return;
-      }
-    }
-  }
-}
-
-// Peform a function on every tile, starting on the INSIDE and going outward
-function iterateOutward(callback) {
-  for (var sum=0; sum<=(2*(boardSize-1)); sum++) {
-    for (var i=Math.min((boardSize-1),sum); i>=Math.max(0,sum-(boardSize-1)); i--) {
-      var j = sum - i;
-      if (callback(i,j)) {
-        return;
-      }
-    }
-  }
-}
-
-function computerMovesHelper(i,j) {
-  debug("My move is: " + i + "," + j);
-  var gameEnded = removeSection(i,j);
-  if (gameEnded) return; // game just ended; don't pass turn to human
-
-  humanTurn = true;
-  say("Your turn again. Pick a square to remove.");
-}
-
-// Return true if game is over, false otherwise.
-function removeSection(Ti,Tj) {
-  candidate = tiles[Ti][Tj];
-  if (!candidate.on) {
-    complain("Error. Tile is already off: " + Ti + "," + Tj);
-  }
-
-  for (var i in tiles) {
-    for (var j in tiles[i]) {
-      cell = tiles[i][j];
-      if (cell.i >= Ti && cell.j >= Tj)
-        turnOff(cell);
-    }
-  }
-
-  repState();
-
-  if (Ti==0 && Tj == 0) {
-    // Game is over
-    var endMessage;
-    if (humanTurn) {
-      endMessage = "You picked the skull. You lose.";
-      showOutcome("you lost.", '#AAA');
-    } else {
-      endMessage = "Darn, I picked the skull. You win!";
-      showOutcome("YOU WON!", '#0F0');
-      // TODO: Unlock 'cheat mode' here?
-      logWin();
-      
-    }
-
-    gameStarted = false;
-    hide(gameState);
-    refreshMap();
-    //show(newGameButton);
-
-    // Go straight into next game!
-    setUpNewGame(endMessage);
-    return true; // game over.
-  }
-  return false;
-}
-
-function turnOff(tile) {
-  tile.on = false;
-  hide(tile);
-}
-
-function turnOn(tile) {
-  tile.on = true;
-  show(tile);
-}
-
-// Runs before every new game, before player picks board size.
-function setUpNewGame(displayMessage) {
-  hide(newGameButton);
-  for (var i in tiles) {
-    for (var j in tiles[i]) {
-      turnOn(tiles[i][j]);
-    }
-  }
-  humanTurn = true;
-  turnOff(origin); // can't play a 1x1 game
-  say(displayMessage);
-}
-
-function show(elt) {
-  elt.style.display = 'inline';
-}
-
-function hide(elt) {
-  elt.style.display = 'none';
-}
-
-//=================================================================
-// Refresh map
-function refreshMap() {
-  var url = "http://m.atthe.ws/games/northwest/grid_stats.php";
-  sillyAjax(url, '', colorCallback);
-}
-
-function colorCallback(text) {
-  eval(text);
-  reColorTiles();
-}
-
-function reColorTiles() {
-  debug("Recoloring");
-  for (var i = 0; i < boardSize; i++) {
-    for (var j = 0; j < boardSize; j++) {
-      var tile = tiles[i][j];
-      tile.wins = hw[i][j];
-      tile.plays = hp[i][j];
-      setDifficulty(tile);
-      initTileShade(tile);      
-    }
-  }
-}
-
-//=================================================================
-// Loggin'
-function logStart(i,j) {
-  debug("logging start");
-  mostRecentGame_i = i;
-  mostRecentGame_j = j;
-  logAct(mostRecentGame_i,mostRecentGame_j,'start');
-}
-
-function logWin() {
-  debug("logging win");
-  logAct(mostRecentGame_i,mostRecentGame_j,'win');
-  mostRecentGame_i = -1;
-  mostRecentGame_j = -1;
-}
-
-function logAct(i,j,act) {
-  var url = "http://m.atthe.ws/games/northwest/northwest_logger.php";
-  var params = "?x="+i+"&y="+j+"&act="+act;
-  sillyAjax(url,params,null);
-}
-
-function sillyAjax(url,params,callback) {
-  var http = new XMLHttpRequest();
-  http.open("GET", url+params, true);
-  http.onreadystatechange = function() {
-    if (http.readyState == 4 && http.status == 200) {
-      if (callback != null) {
-        callback(http.responseText);
-      }
-    }
-  }
-  http.send();
-}
-
-//=================================================================
-
-</script>
+ </style>
 </head>
 
-<body onload="init()">
-<div id="tileContainer"></div>
-<div id="instructions"></div>
-<div id="menu">
- <div id="outcome" class="leftMenuItem"></div>
- <input id="gameState" value="" type="text" class="leftMenuItem">
- <input id="newGame" value="New Game" type="button" class="leftMenuItem">
- <input id="errorBox" value="" type="text" class="leftMenuItem">
- <input id="fasterButton" value="think faster" type="button" class="leftMenuItem">
- <input id="slowerButton" value="think slower" type="button" class="leftMenuItem">
-</div>
-</body>
+<body>
+ <h2 class="say"></h2>
+ <h3 class="say"></h3>
+ <div class="menu"></div>
+ <canvas class="full" style='border: 0px solid #333; background-color:#000;'>Sorry, you need to use a browser that supports HTML5.</canvas>
 
+<script src="jquery-1.7.2.min.js"></script>
+
+ <script>
+  $(document).ready(function(){setup();});
+
+  function initPopup() {
+    $("body").append("<div class='screen'></div>")
+    $(".screen").click(function() {
+      $('.screen').hide();    
+      $(".screen")[0].callback();
+    });
+    $(".screen").append('<div><h2></h2><p></p></div>');
+    $('.screen').hide();    
+  }
+
+  function popup(title, text, callback) {
+    $(".screen")[0].callback = callback;
+    $(".screen h2").text(title);
+    $(".screen p").html(text);
+    $(".screen").show();
+    $(window).resize();
+  }
+
+  $(window).resize(function(){
+    /*
+    $('canvas').hide();
+    // canvas covers screen
+    cSize = [$(document).width(), $(document).height()];
+    $('canvas').css({
+        width: cSize[0],
+        height: cSize[1],
+    });
+    canvas.width = cSize[0];
+    canvas.height = cSize[1];
+    */
+
+    // recenter popup
+    $('div.screen').css({
+        width: $(window).width(),
+        height: Math.max($(window).height(), $(document).height()),
+    });
+    $('.screen > div').css({
+        left: ($(window).width() - $('.screen > div').outerWidth())/2,
+        top: ($(window).height() - $('.screen > div').outerHeight())/2
+    });
+  });
+
+  function say(text, subtext) {
+    $('h2.say').text(text);
+    $('h3.say').text(subtext);
+  }  
+
+  var lookup = {}; // AI hash
+  var canvas = $('canvas')[0];
+  var cSize = [900,1000];
+  canvas.width = cSize[0];
+  canvas.height = cSize[1];
+
+  function setup() {
+    var gridSize = 12;
+    var tileSize = 50.1;
+    var tileSpace = 50;
+    var tileSpeed = 30;
+    var activeOffset = 10;
+    var gravity = 500.0;
+    var tileJolt = 100;
+    var ctx = canvas.getContext('2d')
+
+    var phase = 'pick';
+    var compWait;
+    var tickTime = new Date().getTime();   
+    var gameRect = [-1,-1]; // for logging only
+
+    var tMap = [];
+    window.canvasTimer = setInterval(tick, 0);
+    var waves = [];
+    var waveFreeze = 0;
+
+    initAI();
+    initPopup();
+    $(window).resize();
+    initMenu();
+    initMap();
+    reset();
+
+    function initMenu() {
+      $(".menu").append('<a href="javascript:void(0)" id="howtoplay">how to play</a>');
+      $('#howtoplay').on('click', function() {
+       popup('How To Play',
+             'Take turns removing tiles.<br/>Whoever takes the last tile loses.<br/><br/>',
+             noop
+            )});
+
+      $(".menu").append('<a href="javascript:void(0)" id="colors">colors</a>');
+      $('#colors').on('click', function() {
+           popup('Colors',
+                 'Tiles are colored by their history.<br/><br/>Green tiles have been easy for those before you.<br/>Red tiles have proved more difficult.<br/><br/>As you play, you change the colors for future visitors.<br/>What can you learn from patterns of the past?',
+                 noop
+                )});
+
+      $(".menu").append('<a href="javascript:void(0)" id="reset">restart</a>');
+      $('#reset').on('click', reset);
+
+      /* debug
+      $(".menu").append('<a href="javascript:void(0)" id="printRep">[Print Rep]</a>');
+      $('#printRep').on('click', function() {
+        say('Current State', repState() + ' - ' + repStatePairs(99,99));
+      });
+      */
+    }
+
+    function initAI() {
+      console.log('send off ajax req');
+      $.ajax({
+        url:'pair_12.js',
+        success:function(data) {
+          console.log('start parsing');
+          eval(data);
+          for (var key in pair_12) {
+            lookup[pair_12[key]] = true;
+          }
+          console.log('Loaded AI. Rows: ' + pair_12.length + '/13425');
+        },
+        error:function(data, textStatus, errorThrown) {
+          popup("Couldn't Load AI", 'Try refreshing the page.', noop);
+        },
+      });
+    }
+
+    // Called once only
+    function initMap() {
+      for (i=0; i<gridSize; i++) {
+        tMap[i] = [];
+        for (j=0; j<gridSize; j++) {
+          tMap[i][j] = {size:tileSize,
+                        gx:i,gy:j,
+                        wins:0,plays:0,
+                        oncolor:[153,153,153],offcolor:[102,102,102],
+                        difficulty:0.5,
+                       };
+        }
+      }
+    }
+
+    // Called at beginning of each game
+    function reset() {
+      phase = 'pick';
+      say('Pick a Level', '');
+      $.ajax({
+        url:'http://m.atthe.ws/games/northwest/grid_stats.php',
+        success:function(data) {
+          eval(data);
+          apply(squares(), function(sq) {
+
+            if (sq.gx == 0 && sq.gy == 0) {
+              sq.oncolor = [88,200,64];
+              sq.offcolor = [88,200,64];
+              return;
+            }
+
+            sq.wins = hw[sq.gx][sq.gy];
+            sq.plays = hp[sq.gx][sq.gy];
+            sq.difficulty = (sq.wins+1)/(sq.plays+2);
+
+            var grey = 50 + sq.difficulty * 155; 
+            sq.offcolor = [grey,grey,grey];
+ 
+            var shade = sq.difficulty;
+            var easyX = Math.max(0.0,shade-0.5)*2;
+            var medX  = Math.min(shade,1-shade)*2;
+            var hardX = Math.max(0.0,0.5-shade)*2;
+ 
+            var easy = [88,200,64];
+            var med = [255,255,0];
+            var hard = [255,20,0];
+
+            var red = easyX*easy[0]+medX*med[0]+hardX*hard[0];
+            var gre = easyX*easy[1]+medX*med[1]+hardX*hard[1];
+            var blu = easyX*easy[2]+medX*med[2]+hardX*hard[2];
+
+            sq.oncolor = [red,gre,blu];
+          });
+        }
+      });
+
+      for (i=0; i<gridSize; i++) {
+        for (j=0; j<gridSize; j++) {
+          sq = tMap[i][j];
+          sq['x']=150+tileSpace*i;
+          sq['y']=50+tileSpace*j;
+          sq['angle'] = 0;
+          sq['active'] = false;
+          sq['fall'] = false;
+          sq['dig'] = 0;
+          sq['color'] = [0,0,0];
+        }
+      }
+    }
+
+    function addWave(x,y) {
+       if (waveFreeze > new Date().getTime()) {
+         // wait
+       } else if (waves.length < 10) {
+          waveFreeze = new Date().getTime() + 100;
+          waves.push({
+            'x':x,
+            'y':y,
+            'radius':0,
+            'speed':500,
+          });
+      }
+    }
+
+    $('canvas').mousemove(function(e) {
+
+      if (phase == 'computer') {
+        return;
+
+      } else if (phase == 'pick') {
+        //addWave(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        var c = closest(e);
+        if (!isUndefined(c) && c.gx == 0 && c.gy == 0) { c = undefined; }
+        apply(attached(), function(sq) {
+              sq.active = !isUndefined(c) && (sq.gx > c.gx || sq.gy > c.gy); 
+            });
+        if (isUndefined(c)) {
+          say('Pick a Level', '');
+        } else {
+          say('Pick a Level','Difficulty: ' + difficultyStr(c) );      
+          setStart(c.gx,c.gy);
+        }
+
+      } else if (phase == 'player') {
+        //addWave(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        var c = closest(e);
+        apply(attached(), function(sq) {
+              sq.active = !isUndefined(c) && (sq.gx >= c.gx && sq.gy >= c.gy); 
+           });
+
+      } else {
+        console.log('unknown phase');
+      }
+    });
+
+    function winQuote() {
+      return randElement([
+        "Only the wisest and stupidest of men never change.",
+        "He who knows all the answers has not been asked all the questions.",
+        "They must often change who would be constant in happiness or wisdom.",
+        "Wherever you go, go with all your heart.",
+        "By three methods we may learn wisdom: First, by reflection, which is noblest;<br/>Second, by imitation, which is easiest; and third by experience, which is the bitterest.",
+        "I hear and I forget. I see and I remember. I do and I understand.",
+        "Go before the people with your example, and be laborious in their affairs.",
+        "Real knowledge is to know the extent of one's ignorance.",
+        "Education breeds confidence. Confidence breeds hope. Hope breeds peace.",
+      ]);
+    }
+
+    function loseQuote() {
+      return randElement([
+        "The hardest thing of all is to find a black<br/>cat in a dark room, especially if there is no cat.",
+        "When it is obvious that the goals cannot be<br/>reached, don't adjust the goals, adjust the plans.",
+        "The gem cannot be polished without friction, nor man perfected without trials.",
+        "Better a diamond with a flaw than a pebble without.",
+        "Ability will never catch up with the demand for it.",
+        "Everything has beauty, but not everyone sees it.",
+        "Be not ashamed of mistakes and thus make them crimes.",
+        "Forget injuries, never forget kindnesses.",
+        "It does not matter how slowly you go so long as you do not stop.",
+        "Our greatest glory is not in never falling,<br/>but in getting up every time we do.",
+        "Study the past if you would define the future.",
+        "Before you embark on a journey of revenge, dig two graves.",
+        "Life is really simple, but we<br/>insist on making it complicated.",
+        "When a wise man points at the moon<br/>the imbecile examines the finger.",
+      ]);
+    }
+
+    $('canvas').click(function(e) {
+      if (phase == 'computer') {
+        say('My Turn', 'please be patient');
+      } else {
+        addWave(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        if (phase == 'player') {
+          if (actives().length == 0) {
+            return; // shouldn't happen
+          }
+          dropActiveTiles();
+          console.log('Player moved.');
+          if (noneLeft()) {
+            phase = 'pick';
+            console.log('Computer Won!');
+            popup('You Lost', loseQuote(), reset);
+          } else {
+            phase = 'computer';
+            compWait = 1.0;
+            say('My Turn', '');
+          }
+        } else {
+          // Picking a level
+          logStart();
+          dropActiveTiles();
+          console.log('Starting game.');
+          phase = 'player';
+          say('Your Turn', 'Pick a tile');
+        }
+      }
+    });
+
+    function dropActiveTiles() {
+      apply(actives(),
+            function(sq) {
+             sq.fall = true;
+             var ang = Math.random() * Math.PI * 2;
+             sq.dx = Math.sin(ang) * tileJolt;
+             sq.dy = Math.cos(ang) * tileJolt;
+             sq.dang = 1.0 * (Math.random()-0.5);
+            }
+           );
+    }
+
+    function closest(e) {
+      var closest;
+      var minDist = 75;
+      var squareArray = attached();     
+      for (i=0; i<squareArray.length; i++) {
+        var sq = squareArray[i];
+        var dx = e.clientX - sq.x - canvas.offsetLeft;
+        var dy = e.clientY - sq.y - canvas.offsetTop;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < minDist) {
+          closest = sq;
+          minDist = dist;
+        }
+      }
+      return closest;
+    }
+
+    function tickAI(dt) {
+      if (phase !== 'computer') {
+        return;
+      }
+      compWait -= dt;
+      if (compWait < 0) {
+        if (actives().length == 0) {
+          var ch = attached();
+          var wins = filter(ch, function(sq) {
+            var hypo = repStatePairs(sq.gx,sq.gy);
+            return !isUndefined(lookup[hypo]);
+          })
+          var choice;
+          if (wins.length == 0) {
+            console.log(' computer is losing. choosing randomly ('+ch.length+' choices)'); 
+            if (ch.length > 1) {
+              var org = ch.shift(); // don't pick last tile unless forced to
+              console.log('removing origin:');
+              console.log(org);
+            }
+            choice = randElement(ch)
+          } else {
+            console.log(' computer is winning. ('+wins.length+' choices)');
+            choice = randElement(wins);
+          }
+          apply(ch, function(sq) {
+            sq.active = !sq.fall && sq.gx >= choice.gx && sq.gy >= choice.gy;          
+          });
+          compWait = 1.5;
+          console.log('Computer picked.'); 
+        } else {
+          dropActiveTiles();
+          if (noneLeft()) {
+            logWin();
+            phase = 'pick';
+            console.log('Player Won!');
+            popup('You Won', winQuote(), reset);
+          } else {
+            phase = 'player'; 
+            console.log('Computer moved.'); 
+            if (attached().length == 1) {
+              say('Your Turn', '');
+            } else {
+              say('Your Turn', '');
+            }
+          }
+        }
+      }
+    }
+
+    function tick() {
+      var newTime = new Date().getTime();
+      var dt = (newTime - tickTime)/1000;
+      tickTime = newTime;
+      tickSquares(dt);
+      tickAI(dt);
+      tickWaves(dt);
+      draw();
+    }
+
+    function tickWaves(dt) {
+      apply(waves, function(w) {
+        w['radius'] += w['speed'] * dt;
+        apply(attached(), function(sq) {
+          var dx = sq.x-w['x'];
+          var dy = sq.y-w['y'];
+          var dist = Math.sqrt(Math.abs(dx*dx + dy*dy));
+          if (Math.abs(dist-w['radius']) < 25) {
+            sq.angle += 100*Math.random()*dt / w['radius'];
+          }
+        });
+      });
+
+      // remove some
+      apply(waves, function(w) {
+        if (w['radius'] > 1000) {
+          waves.splice(waves.indexOf(w), 1);
+          //console.log('removed wave, ' + waves.length + ' left.');
+        }
+      });
+
+    }
+
+    function tickSquares(dt) {
+
+      apply(attached(), function(sq) {
+        for (var i=0; i<3; i++) {
+          sq.color[i] = 0.99*sq.color[i] + 0.01 * (sq.active ? sq.offcolor[i] : sq.oncolor[i]);
+        }
+        sq.angle *= 0.9;
+        sq.dig += sq.active ? tileSpeed*dt : -tileSpeed*dt;
+        sq.dig = Math.min(activeOffset, Math.max(0, sq.dig));
+      });
+      apply(detached(), function(sq) {
+        if (sq.y < cSize[1] + 200) {
+          sq.dy += gravity * dt;
+          sq.x += sq.dx * dt;
+          sq.y += sq.dy * dt;
+          sq.angle += sq.dang * dt;
+        } else {
+          // perf- remove from array?
+          // fallers.splice(fallers.indexOf(sq),1);
+        }
+      });      
+    }
+
+    //=============================================
+    // Drawing
+    function draw() {
+      ctx.clearRect(0,0,cSize[0],cSize[1]);
+      apply(attached(), function(sq) {drawSq(sq)});
+      apply(detached(), function(sq) {drawSq(sq)});
+    }
+
+    function drawSq(sq) {
+      var x = sq.x + sq.dig;
+      var y = sq.y + sq.dig;
+      var grad = ctx.createRadialGradient(x, y, 0, x, y, 140);
+      grad.addColorStop(0, 'rgb('+Math.floor(sq.color[0])+','+Math.floor(sq.color[1])+','+Math.floor(sq.color[2])+')');
+      grad.addColorStop(1, '#000');
+      ctx.fillStyle = grad;			 
+
+      ctx.beginPath();
+      var theta = sq.angle + Math.PI/4;
+      var t1 = Math.sin(theta) * sq.size * 0.707;
+      var t2 = Math.cos(theta) * sq.size * 0.707;
+      ctx.moveTo(x+t1,y+t2);
+      ctx.lineTo(x+t2,y-t1);
+      ctx.lineTo(x-t1,y-t2);
+      ctx.lineTo(x-t2,y+t1);
+      ctx.fill();
+    }
+
+    //=============================================
+    // Logging
+    function setStart(a,b) {
+      gameRect = [a,b];
+    }
+    function logStart() {
+      logAct('start');
+    }
+    function logWin() {
+      logAct('win');
+      gameRect = [-1,-1];
+    }
+    function logAct(act) {
+      logURL = 'http://m.atthe.ws/games/northwest/northwest_logger.php/?'+
+               'x='+gameRect[0]+
+               '&y='+gameRect[1]+
+               '&act='+act;
+      console.log('    logging to '+logURL);
+      $.ajax({url:logURL,
+              success:function(data) { console.log('    log succeeded ('+act+')')
+             }});
+    }
+
+    //=============================================
+    // Game Utilities
+    function noneLeft() {
+      return attached().length == 0;
+    }
+
+    function attached() {
+      return filter(squares(), function(x) {return !x.fall;});
+    }
+
+    function detached() {
+      return filter(squares(), function(x) {return x.fall;});
+    }
+
+    function actives() {
+      return filter(attached(), function(x) {return x.active;});
+    }
+
+    function squares() {
+      var ret = [];
+      for (var i=0; i<tMap.length; i++) {
+        for (var j=0; j<tMap.length; j++) {
+          ret.push(tMap[i][j]);
+        }
+      }
+      return ret;
+    }
+
+    function difficultyStr(sq) {  
+      switch (Math.floor(sq.difficulty * 5)) {
+        case 0: return "Very Hard";
+        case 1: return "Hard";
+        case 2: return "Medium";
+        case 3: return "Easy";
+        default: return "Very Easy";
+      }
+    }
+
+    // Print state as pairs of numbers. For instance
+    // xxxx
+    // xx
+    // would be 42
+    function repState() {
+      var ret = '';
+      for (var i=0; i<tMap.length; i++) {
+        for (var j=0; j<tMap.length; j++) {
+          if (tMap[i][j].fall) {
+            if (j > 0) {
+              ret += j.toString(16);
+            }
+            break;
+          }
+        }
+        if (j==12) {
+          ret += j.toString(16);
+        }
+      }
+      return ret;
+    }
+
+    // Print state as a list of outlying coordinates. For instance
+    // xxxx
+    // xx
+    // would be 22,41
+    function repStatePairs(x,y) {
+      if (isUndefined(x) || isUndefined(y)) {
+        console.log('should pass args to repstate...');
+        x=99;
+        y=99;
+      }
+      var ret = [];
+      for (var i=0; i<tMap.length; i++) {
+        for (var j=0; j <= tMap.length; j++) {
+          if (j == tMap.length || fall(i,j)) {
+            j--;
+            break;
+          }
+        }
+        if (j == -1) {
+          break;
+        }
+        for (i=0; i <= 12; i++) { // deliberately affect outer loop index
+          if (i == tMap.length || fall(i,j)) {
+            i--;
+            break;
+          }
+        }
+        if (i == -1) {
+          break;
+        }
+        ret.push((i+1).toString(16) + (j+1).toString(16));        
+      }
+      var str = ret.reverse().join('');    
+      var rev = reverse(str);
+      return rev < str ? rev : str;
+
+      function fall(a,b) {
+        return (a >= x && b >= y) || tMap[a][b].fall;
+      }
+    }
+  }
+
+  //=============================================
+  // Utility Functions
+  function filter(arr, f) {
+    var ret = [];
+    for (var i=0; i<arr.length; i++) {
+      if (f(arr[i])) {
+        ret.push(arr[i]);
+      }
+    }
+    return ret;
+  }
+
+  function randElement(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function apply(arr,f) {
+    for (var i=0; i<arr.length; i++) {
+      f(arr[i]);
+    }
+  }
+
+  function reverse(str) {
+    var ret = "";
+    for (var i=0; i<str.length; i++) {
+      ret += str.charAt(str.length-1-i);
+    }
+    return ret;
+  }
+
+  function noop() {
+  }
+
+  function isUndefined(obj) {
+    return (typeof obj == "undefined");
+  }
+
+  //=============================================
+
+  </script>
+ </body>
 </html>

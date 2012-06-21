@@ -1,50 +1,47 @@
 <?php
 require_once('../../../reckon/data/mysql_connect.php');
 
-$safety = 1000;
-$max_reasonable = $safety + 100;
-$b = "<br/>";
+$min = 1000;
+$max = $min + 30;
+$br = "<br/>";
 
 if (!isset($_GET['x']  ) ||
     !isset($_GET['y']  ) ||
     !isset($_GET['act'])) {
-
-  exit("No Input.");
-
+  exit("Not all inputs were set.");
 }
 
-$x = $safety + (int)$_GET['x'];
-$y = $safety + (int)$_GET['y'];
-if (!is_int($x)||!is_int($y)) {
+$x = $min + (int) $_GET['x'];
+$y = $min + (int) $_GET['y'];
+
+if (!is_int($x) || !is_int($y)) {
   exit("Bad Input: " . '('.$x .','. $y.')');
 }
-if ($x > $max_reasonable || $y > $max_reasonable) {
-  exit("Big Input");
+
+if ($x < $min || $y < $min || $x > $max || $y > $max) {
+  exit("Input out of bounds: " . '('.$x .','. $y.')');
 }
 
-if ($_GET[act] == 'start') {
+if ($_GET[act] === 'start') {
   $act = 'start';
-} else if ($_GET[act] == 'win') {
+} else if ($_GET[act] === 'win') {
   $act = 'win';
-}
-else {
-  exit("Bad Act");
+} else {
+  exit("Action unrecognized");
 }
 
 $ip = $_SERVER['REMOTE_ADDR'];
 $time = time();
 
-echo "X: " . $x . $b;
-echo "Y: " . $y . $b;
-echo "IP: " . $ip . $b;
-echo "Time: " . $time . $b;
-echo "Act: " . $act .$b;
+echo "X: "    . $x    . $br;
+echo "Y: "    . $y    . $br;
+echo "IP: "   . $ip   . $br;
+echo "Time: " . $time . $br;
+echo "Act: "  . $act  . $br;
 
 $fields = "(x, y, time, ip, act)";
 $values = "($x, $y, $time, '$ip', '$act')";
+getQueryResult("INSERT INTO northwest_log $fields VALUES $values");
 
-$query = "INSERT INTO northwest_log $fields VALUES $values";
-getQueryResult($query);
-
-echo("Affected: " .mysql_affected_rows() .$b);
+echo("Affected: " .mysql_affected_rows() . $br);
 ?>

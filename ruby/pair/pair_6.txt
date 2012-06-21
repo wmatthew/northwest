@@ -1,0 +1,72 @@
+Evaluating 6 x 6 board...
+  1 took 0s. Estimated  0:01s left.
+  2 took 0s. Estimated  0:01s left.
+  3 took 0s. Estimated  0:01s left.
+  4 took 0s. Estimated  0:01s left.
+  5 took 0s. Estimated  0:01s left.
+  6 took 0s. Estimated  0:01s left.
+  7 took 0s. Estimated  0:01s left.
+  8 took 0s. Estimated  0:01s left.
+  9 took 0s. Estimated  0:01s left.
+  10 took 0s. Estimated  0:01s left.
+  11 took 0s. Estimated  0:01s left.
+  12 took 0s. Estimated  0:01s left.
+  13 took 0s. Estimated  0:01s left.
+  14 took 0s. Estimated  0:01s left.
+  15 took 0s. Estimated  0:01s left.
+  16 took 0s. Estimated  0:01s left.
+  17 took 0s. Estimated  0:01s left.
+  18 took 0s. Estimated  0:01s left.
+  19 took 0s. Estimated  0:01s left.
+  20 took 0s. Estimated  0:01s left.
+  21 took 0s. Estimated  0:01s left.
+  22 took 0s. Estimated  0:01s left.
+  23 took 0s. Estimated  0:01s left.
+  24 took 0s. Estimated  0:01s left.
+  25 took 0s. Estimated  0:01s left.
+  26 took 0s. Estimated  0:01s left.
+  27 took 0s. Estimated  0:01s left.
+  28 took 0s. Estimated  0:01s left.
+  29 took 0s. Estimated  0:01s left.
+  30 took 0s. Estimated  0:01s left.
+  31 took 0s. Estimated  0:01s left.
+  32 took 0s. Estimated  0:01s left.
+  33 took 0s. Estimated  0:01s left.
+  34 took 0s. Estimated  0:01s left.
+  35 took 0s. Estimated  0:01s left.
+  36 took 0s. Estimated  0:00s left.
+Report
+Size: 6
+Total bad states: 27
+Total good states: 466
+-----------------------
+All bad states:
+'3325',
+'6116',
+'52433426',
+'2415',
+'2314',
+'2213',
+'2112',
+'52443526',
+'52432416',
+'4225',
+'2516',
+'3316',
+'322416',
+'322315',
+'3214',
+'3113',
+'5326',
+'533416',
+'11',
+'512316',
+'4216',
+'4114',
+'524536',
+'423315',
+'513216',
+'5115',
+'412215',
+-----------------------
+0.350874 seconds.

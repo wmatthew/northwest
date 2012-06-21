@@ -1,0 +1,238 @@
+Evaluating 8 x 8 board...
+  1 took 0s. Estimated  0:01s left.
+  2 took 0s. Estimated  0:01s left.
+  3 took 0s. Estimated  0:01s left.
+  4 took 0s. Estimated  0:01s left.
+  5 took 0s. Estimated  0:01s left.
+  6 took 0s. Estimated  0:01s left.
+  7 took 0s. Estimated  0:01s left.
+  8 took 0s. Estimated  0:01s left.
+  9 took 0s. Estimated  0:01s left.
+  10 took 0s. Estimated  0:01s left.
+  11 took 0s. Estimated  0:01s left.
+  12 took 0s. Estimated  0:01s left.
+  13 took 0s. Estimated  0:02s left.
+  14 took 0s. Estimated  0:02s left.
+  15 took 0s. Estimated  0:02s left.
+  16 took 0s. Estimated  0:03s left.
+  17 took 0s. Estimated  0:03s left.
+  18 took 0s. Estimated  0:04s left.
+  19 took 0s. Estimated  0:04s left.
+  20 took 0s. Estimated  0:05s left.
+  21 took 0s. Estimated  0:05s left.
+  22 took 0s. Estimated  0:06s left.
+  23 took 0s. Estimated  0:06s left.
+  24 took 0s. Estimated  0:07s left.
+  25 took 0s. Estimated  0:08s left.
+  26 took 0s. Estimated  0:09s left.
+  27 took 0s. Estimated  0:09s left.
+  28 took 0s. Estimated  0:09s left.
+  29 took 0s. Estimated  0:10s left.
+  30 took 0s. Estimated  0:10s left.
+  31 took 0s. Estimated  0:10s left.
+  32 took 0s. Estimated  0:10s left.
+  33 took 0s. Estimated  0:10s left.
+  34 took 0s. Estimated  0:10s left.
+  35 took 0s. Estimated  0:10s left.
+  36 took 0s. Estimated  0:09s left.
+  37 took 0s. Estimated  0:09s left.
+  38 took 0s. Estimated  0:08s left.
+  39 took 0s. Estimated  0:08s left.
+  40 took 0s. Estimated  0:07s left.
+  41 took 0s. Estimated  0:07s left.
+  42 took 0s. Estimated  0:06s left.
+  43 took 0s. Estimated  0:05s left.
+  44 took 0s. Estimated  0:05s left.
+  45 took 0s. Estimated  0:04s left.
+  46 took 0s. Estimated  0:04s left.
+  47 took 0s. Estimated  0:03s left.
+  48 took 0s. Estimated  0:03s left.
+  49 took 0s. Estimated  0:03s left.
+  50 took 0s. Estimated  0:02s left.
+  51 took 0s. Estimated  0:02s left.
+  52 took 0s. Estimated  0:02s left.
+  53 took 0s. Estimated  0:02s left.
+  54 took 0s. Estimated  0:01s left.
+  55 took 0s. Estimated  0:01s left.
+  56 took 0s. Estimated  0:01s left.
+  57 took 0s. Estimated  0:01s left.
+  58 took 0s. Estimated  0:01s left.
+  59 took 0s. Estimated  0:01s left.
+  60 took 0s. Estimated  0:01s left.
+  61 took 0s. Estimated  0:01s left.
+  62 took 0s. Estimated  0:01s left.
+  63 took 0s. Estimated  0:01s left.
+  64 took 0s. Estimated  0:00s left.
+Report
+Size: 8
+Total bad states: 165
+Total good states: 6397
+-----------------------
+All bad states:
+'544638',
+'7253342518',
+'71422518',
+'7152463728',
+'322315',
+'73642618',
+'734518',
+'62453628',
+'61453627',
+'52433628',
+'3325',
+'72332418',
+'332417',
+'2516',
+'42332618',
+'62534527',
+'3316',
+'5648',
+'524536',
+'623327',
+'62442618',
+'522318',
+'6447',
+'644618',
+'623318',
+'61432517',
+'645537',
+'6253443728',
+'7228',
+'2415',
+'4327',
+'72632618',
+'71453618',
+'534738',
+'62544627',
+'7253442618',
+'42332517',
+'71532518',
+'4318',
+'7144352618',
+'543628',
+'7152442518',
+'6253443627',
+'544728',
+'7152453628',
+'6243352618',
+'6328',
+'3427',
+'53443618',
+'52433426',
+'2314',
+'71544528',
+'7152432418',
+'3418',
+'614637',
+'64552618',
+'713218',
+'71523518',
+'61423317',
+'5326',
+'62533517',
+'634517',
+'634437',
+'423315',
+'2213',
+'62532618',
+'74452618',
+'72633518',
+'62432418',
+'554618',
+'61443527',
+'655627',
+'63543627',
+'513528',
+'61322418',
+'72552618',
+'53463728',
+'2112',
+'715538',
+'71524738',
+'6116',
+'633527',
+'625437',
+'2718',
+'624638',
+'625428',
+'5115',
+'61322317',
+'63342618',
+'62342517',
+'73544618',
+'73542518',
+'63453618',
+'43342517',
+'6354452618',
+'71433528',
+'7152342618',
+'423417',
+'7263442518',
+'52432618',
+'62443528',
+'11',
+'635547',
+'63544537',
+'533428',
+'7152443528',
+'512518',
+'71554628',
+'62534538',
+'72544518',
+'513317',
+'7143342618',
+'7253443518',
+'614218',
+'322618',
+'533416',
+'712318',
+'61433417',
+'4114',
+'71564728',
+'72543618',
+'53352618',
+'622518',
+'42342518',
+'512417',
+'612217',
+'51342618',
+'422418',
+'8118',
+'52443526',
+'5217',
+'553728',
+'53453628',
+'322517',
+'423528',
+'443517',
+'714428',
+'513216',
+'64554627',
+'62433728',
+'52432416',
+'7152452618',
+'745618',
+'3214',
+'422317',
+'54453618',
+'63543618',
+'512316',
+'524428',
+'622417',
+'532418',
+'322416',
+'412215',
+'71533618',
+'73643518',
+'62533528',
+'624317',
+'4225',
+'7152443618',
+'6344352618',
+'62534628',
+'7117',
+'3113',
+'4216',
+'2617',
+-----------------------
+8.596834 seconds.

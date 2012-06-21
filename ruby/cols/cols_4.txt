@@ -1,0 +1,32 @@
+Evaluating 4 x 4 board...
+  1 took 0s. Estimated  0:01s left.
+  2 took 0s. Estimated  0:01s left.
+  3 took 0s. Estimated  0:01s left.
+  4 took 0s. Estimated  0:01s left.
+  5 took 0s. Estimated  0:01s left.
+  6 took 0s. Estimated  0:01s left.
+  7 took 0s. Estimated  0:01s left.
+  8 took 0s. Estimated  0:01s left.
+  9 took 0s. Estimated  0:01s left.
+  10 took 0s. Estimated  0:01s left.
+  11 took 0s. Estimated  0:01s left.
+  12 took 0s. Estimated  0:01s left.
+  13 took 0s. Estimated  0:01s left.
+  14 took 0s. Estimated  0:01s left.
+  15 took 0s. Estimated  0:01s left.
+  16 took 0s. Estimated  0:00s left.
+Report
+Size: 4
+Total bad states: 7
+Total good states: 35
+-----------------------
+All bad states:
+'4114',
+'11',
+'2314',
+'2213',
+'2112',
+'3214',
+'3113',
+-----------------------
+0.013456 seconds.
