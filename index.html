@@ -65,9 +65,7 @@
  <h3 class="say"></h3>
  <div class="menu"></div>
  <canvas class="full" style='border: 0px solid #333; background-color:#000;'>Sorry, you need to use a browser that supports HTML5.</canvas>
-
-<script src="jquery-1.7.2.min.js"></script>
-
+ <script src="jquery-1.7.2.min.js"></script>
  <script>
   $(document).ready(function(){setup();});
 
@@ -91,6 +89,7 @@
 
   $(window).resize(function(){
     /*
+    // Dynamic resizing causes blinking in some browsers, for not much benefit.
     $('canvas').hide();
     // canvas covers screen
     cSize = [$(document).width(), $(document).height()];
@@ -143,7 +142,9 @@
     window.canvasTimer = setInterval(tick, 0);
     var waves = [];
     var waveFreeze = 0;
+    var mousePos = [];
 
+    // Initialization
     initAI();
     initPopup();
     $(window).resize();
@@ -178,7 +179,7 @@
     }
 
     function initAI() {
-      console.log('send off ajax req');
+      console.log('sent ajax request');
       $.ajax({
         url:'pair_12.js',
         success:function(data) {
@@ -280,13 +281,18 @@
     }
 
     $('canvas').mousemove(function(e) {
+      mousePos[0] = e.clientX - canvas.offsetLeft;
+      mousePos[1] = e.clientY - canvas.offsetTop;
+      mouseMove();
+    });
 
+    function mouseMove() {
       if (phase == 'computer') {
         return;
 
       } else if (phase == 'pick') {
-        //addWave(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-        var c = closest(e);
+        //addWave(mousePos[0], mousePos[1]);
+        var c = closest();
         if (!isUndefined(c) && c.gx == 0 && c.gy == 0) { c = undefined; }
         apply(attached(), function(sq) {
               sq.active = !isUndefined(c) && (sq.gx > c.gx || sq.gy > c.gy); 
@@ -299,8 +305,8 @@
         }
 
       } else if (phase == 'player') {
-        //addWave(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-        var c = closest(e);
+        //addWave(mousePos[0], mousePos[1]);
+        var c = closest();
         apply(attached(), function(sq) {
               sq.active = !isUndefined(c) && (sq.gx >= c.gx && sq.gy >= c.gy); 
            });
@@ -308,7 +314,7 @@
       } else {
         console.log('unknown phase');
       }
-    });
+    }
 
     function winQuote() {
       return randElement([
@@ -316,7 +322,7 @@
         "He who knows all the answers has not been asked all the questions.",
         "They must often change who would be constant in happiness or wisdom.",
         "Wherever you go, go with all your heart.",
-        "By three methods we may learn wisdom: First, by reflection, which is noblest;<br/>Second, by imitation, which is easiest; and third by experience, which is the bitterest.",
+        "By three methods we may learn wisdom:<br/>First, by reflection, which is noblest;<br/>Second, by imitation, which is easiest;<br/>and third by experience, which is the bitterest.",
         "I hear and I forget. I see and I remember. I do and I understand.",
         "Go before the people with your example, and be laborious in their affairs.",
         "Real knowledge is to know the extent of one's ignorance.",
@@ -372,6 +378,7 @@
           say('Your Turn', 'Pick a tile');
         }
       }
+      mouseMove(); // trigger mouse move after every click.
     });
 
     function dropActiveTiles() {
@@ -386,14 +393,14 @@
            );
     }
 
-    function closest(e) {
+    function closest() {
       var closest;
       var minDist = 75;
       var squareArray = attached();     
       for (i=0; i<squareArray.length; i++) {
         var sq = squareArray[i];
-        var dx = e.clientX - sq.x - canvas.offsetLeft;
-        var dy = e.clientY - sq.y - canvas.offsetTop;
+        var dx = mousePos[0] - sq.x;
+        var dy = mousePos[1] - sq.y;
         var dist = Math.sqrt(dx*dx + dy*dy);
         if (dist < minDist) {
           closest = sq;
@@ -443,11 +450,8 @@
           } else {
             phase = 'player'; 
             console.log('Computer moved.'); 
-            if (attached().length == 1) {
-              say('Your Turn', '');
-            } else {
-              say('Your Turn', '');
-            }
+            say('Your Turn', '');
+            mouseMove(); // trigger mouse move after computer's turn.
           }
         }
       }

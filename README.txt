@@ -29,3 +29,16 @@ Firefox, IE, and Safari. It seems to work well in all of them, though
 it's a little snappier in Chrome.
 
 ----------------------------------------------------------------------
+TODO
+- track accomplished levels (star)
+  - cookies set for users: give users a uniq id
+  - your score in left bar
+  - high scores (other users) in left bar.
+    - you can edit how your name appears (validate!)
+
+- integrate star/skull images into game/popups
+- computer icon shows whose turn it is
+- popup causes vertical scroll bar; fix this
+- Let user change AI: easy/medium/hard
+- add lock icon, lock some levels
+- measure FPS; tone down graphics dynamically
