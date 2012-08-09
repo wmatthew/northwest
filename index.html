@@ -117,6 +117,7 @@
     $('h3.say').text(subtext);
   }  
 
+  var twoPlayerMode = false;
   var lookup = {}; // AI hash
   var canvas = $('canvas')[0];
   var cSize = [900,1000];
@@ -167,6 +168,10 @@
                  noop
                 )});
 
+
+      $(".menu").append('<a href="javascript:void(0)" id="playermode">switch to 2 player</a>')
+                .on('click', togglePlayerMode);
+
       $(".menu").append('<a href="javascript:void(0)" id="reset">restart</a>');
       $('#reset').on('click', reset);
 
@@ -208,6 +213,16 @@
                         difficulty:0.5,
                        };
         }
+      }
+    }
+
+    function togglePlayerMode() {
+      reset();
+      twoPlayerMode = !twoPlayerMode;
+      if (twoPlayerMode) {
+        $('#playermode').text('switch to 1 player');
+      } else {
+        $('#playermode').text('switch to 2 player');
       }
     }
 
@@ -304,7 +319,7 @@
           setStart(c.gx,c.gy);
         }
 
-      } else if (phase == 'player') {
+      } else if (phase == 'player' || phase == 'p1' || phase == 'p2') {
         //addWave(mousePos[0], mousePos[1]);
         var c = closest();
         apply(attached(), function(sq) {
@@ -349,7 +364,7 @@
       ]);
     }
 
-    $('canvas').click(function(e) {
+    function playerVsComputerClick(e) {
       if (phase == 'computer') {
         say('My Turn', 'please be patient');
       } else {
@@ -378,6 +393,46 @@
           say('Your Turn', 'Pick a tile');
         }
       }
+    }
+
+    function playerVsPlayerClick(e) {
+
+        addWave(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        if (phase == 'pick') {
+          // Picking a level
+          //logStart();
+          dropActiveTiles();
+          console.log('Starting 2 player game.');
+          phase = 'p1';
+          say('Player 1 Turn', 'Pick a tile');
+        } else if (phase == 'p1' || phase == 'p2'){
+          if (actives().length == 0) {
+            return; // shouldn't happen
+          }
+          dropActiveTiles();
+          console.log('Player ' + phase +' moved.');
+          if (noneLeft()) {
+            var msg = (phase !== 'p1') ? 'Player 1 Won!' : 'Player 2 Won!';
+            console.log(msg);
+            popup(msg, winQuote(), reset);
+          } else {
+            phase = (phase === 'p1') ? 'p2' : 'p1';
+            say((phase === 'p1') ? 'Player 1 Turn' : 'Player 2 Turn', '');
+          }
+        } else {
+          console.log('Unexpected phase: ' + phase);
+        }
+      
+    }
+
+    $('canvas').click(function(e) {
+
+      if (twoPlayerMode) {
+        playerVsPlayerClick(e);
+      } else {
+        playerVsComputerClick(e);
+      }
+
       mouseMove(); // trigger mouse move after every click.
     });
 
