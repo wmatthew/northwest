@@ -1,12 +1,7 @@
 ----------------------------------------------------------------------
 Northwest
 
-Play it
-  http://m.atthe.ws/games/northwest/
-
-Read about it
-  http://m.atthe.ws/portfolio/northwest/
-  http://m.atthe.ws/wiki/Northwest
+Read about it here:
   http://en.wikipedia.org/wiki/Chomp
 
 Credits
